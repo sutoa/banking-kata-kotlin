@@ -38,7 +38,7 @@ ext {
 }
 
 dependencies {
-    compile libs.kotlin,
+    implementation libs.kotlin,
             libs.slf4j
 
     testImplementation libs.test.junitApi,
