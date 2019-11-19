@@ -40,4 +40,15 @@ class AccountTest {
         assertThatExceptionOfType(InsufficientFundsException::class.java)
                 .isThrownBy { account.withdraw(Money(5.0)) }
     }
+
+    @Test
+    internal fun `transfer an amount when there's sufficient fund`() {
+        val fromAccount = Account(Money(100.0))
+        val toAccount = Account(Money(20.0))
+
+        fromAccount.transfer(toAccount, Money(33.0))
+
+        assertThat(toAccount.balance).isEqualTo(Money(53.0))
+        assertThat(fromAccount.balance).isEqualTo(Money(67.0))
+    }
 }

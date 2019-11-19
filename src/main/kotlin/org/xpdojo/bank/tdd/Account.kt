@@ -5,12 +5,17 @@ package org.xpdojo.bank.tdd
  */
 class Account(var balance: Money = Money(0.0)) {
     fun deposit(delta: Money) {
-          balance = balance add delta
+        balance = balance add delta
     }
 
     fun withdraw(delta: Money) {
-        if(balance.lessThan(delta))
+        if (balance.lessThan(delta))
             throw InsufficientFundsException("")
         balance = balance minus delta
+    }
+
+    fun transfer(toAccount: Account, delta: Money) {
+        withdraw(delta)
+        toAccount.deposit(delta)
     }
 }
