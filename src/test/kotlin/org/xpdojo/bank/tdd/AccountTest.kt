@@ -1,6 +1,7 @@
 package org.xpdojo.bank.tdd
 
-import org.junit.jupiter.api.Disabled
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
@@ -16,8 +17,27 @@ import org.junit.jupiter.api.Test
 @DisplayName("With an account we can ...")
 class AccountTest {
 
-    @Disabled
-    @Test fun `deposit an amount to increase the balance`() {
-        TODO("Implement a failing test, make it pass, refactor ...")
+    private val account: Account = Account()
+
+    @Test
+    fun `deposit an amount to increase the balance`() {
+        account.deposit(Money(100.0))
+
+        assertThat(account.balance).isEqualTo(Money(100.0))
+    }
+
+    @Test
+    internal fun `withdraw an amount to decrease the balance`() {
+        account.deposit(Money(10.0))
+
+        account.withdraw(Money(6.0))
+
+        assertThat(account.balance).isEqualTo(Money(4.0))
+    }
+
+    @Test
+    internal fun `throws exception when withdraw without sufficient fund`() {
+        assertThatExceptionOfType(InsufficientFundsException::class.java)
+                .isThrownBy { account.withdraw(Money(5.0)) }
     }
 }
