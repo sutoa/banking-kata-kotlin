@@ -9,7 +9,8 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.xpdojo.bank.tdd.TransactionType.*
-import java.time.Clock.*
+import java.time.Clock.fixed
+import java.time.Clock.offset
 import java.time.Duration
 import java.time.Duration.ofDays
 import java.time.Duration.ofHours
@@ -88,11 +89,11 @@ class AccountTest {
     @Test
     internal fun `produce statement with account activities`() {
 
-        tick(clock, ofDays(1))
+        offset(clock, ofDays(1))
         anAccountWithBalance.withdraw(Money(50.5))
-        tick(clock, ofDays(2))
+        offset(clock, ofDays(2))
         anAccountWithBalance.deposit(Money(100.3))
-        tick(clock, ofHours(6))
+        offset(clock, ofHours(6))
 
         val statement = anAccountWithBalance.statement()
 
