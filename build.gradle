@@ -42,6 +42,7 @@ dependencies {
             libs.slf4j
 
     testImplementation libs.test.junitApi,
+            libs.test.junitParams,
             libs.test.assertj
 
     testRuntimeOnly libs.test.junitEngine,

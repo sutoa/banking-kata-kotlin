@@ -1,5 +1,7 @@
 package org.xpdojo.bank.tdd
 
+import java.text.DecimalFormat
+
 /**
  * Class to represent a monetary amount.  Should treat this an immutable class.
  * Hint: should this be a data class.
@@ -15,5 +17,11 @@ data class Money(val amount: Double) {
 
     fun lessThan(anAmount: Money): Boolean {
         return amount < anAmount.amount
+    }
+
+    override fun toString(): String {
+        val formatter = DecimalFormat("#,###.00")
+        print(formatter.format(amount) )
+        return "$${formatter.format(amount)}"
     }
 }
