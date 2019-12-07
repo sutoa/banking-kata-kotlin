@@ -3,9 +3,7 @@ package org.xpdojo.bank.tdd
 import org.xpdojo.bank.tdd.TransactionType.*
 import java.time.Clock
 import java.time.LocalDateTime.now
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.Locale.US
 
 /**
  * Represents a bank account.  You can do things to this class like deposit, withdraw and transfer.
@@ -13,20 +11,21 @@ import java.util.*
 class Account(var balance: Money = Money(0.0),
               var clock: Clock = Clock.systemDefaultZone(),
               private val transactions: MutableList<Transaction> = mutableListOf()) {
+
     init {
-        transactions.add(Transaction(ACCOUNT_OPEN, balance, now(clock)))
+        transactions.add(Transaction(OPEN, balance, now(clock)))
     }
 
     fun deposit(delta: Money) {
         balance = balance add delta
-        transactions.add(Transaction(DEPOSIT, balance, now(clock)))
+        transactions.add(Transaction(DEPOSIT, delta, now(clock)))
     }
 
     fun withdraw(delta: Money) {
         if (balance.lessThan(delta))
             throw InsufficientFundsException("")
         balance = balance minus delta
-        transactions.add(Transaction(WITHDRAW, balance, now(clock)))
+        transactions.add(Transaction(WITHDRAW, delta, now(clock)))
     }
 
     fun transfer(toAccount: Account, delta: Money) {
@@ -35,36 +34,22 @@ class Account(var balance: Money = Money(0.0),
     }
 
     fun balanceSlip(): String {
-        val instant = clock.instant()
-        val dateStr = DateTimeFormatter.ofPattern("MMM dd, yyyy")
-                .withLocale(Locale.US)
-                .withZone(ZoneId.of("EST5EDT"))
-                .format(instant)
-
-        val timeStr = DateTimeFormatter.ofPattern("hh:mm:ss")
-                .withLocale(Locale.US)
-                .withZone(ZoneId.of("EST5EDT"))
-                .format(instant)
 
         return """
             Balance: $balance
-            Date: $dateStr Time: $timeStr ET
+            ${clock.instant().dataTimeStrForStatement(US, DEFAULT_ZONE)}
         """.trimIndent()
     }
+
+    private val newLine = System.lineSeparator().repeat(2)
 
     fun statement(): String {
-        return """
-            abc
-            efg
-            ${activityHistory()}
-        """.trimIndent()
-    }
-
-    private fun activityHistory(): String {
-        return "withdraw"
+        return transactions.joinToString(separator = newLine, postfix = "$newLine${balanceSlip()}")
     }
 
     fun transactions(): List<Transaction> {
         return transactions.toList()
     }
 }
+
+

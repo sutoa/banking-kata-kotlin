@@ -2,7 +2,6 @@ package org.xpdojo.bank.tdd
 
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -34,14 +33,9 @@ private val etZone = of("EST5EDT")
 class AccountTest {
 
     private val accountOpenTimeInUtc = parse("2020-02-10T17:03:03.00Z")
-    private val clock = fixed(accountOpenTimeInUtc, etZone)
+    private var clock = fixed(accountOpenTimeInUtc, etZone)
     private val anAccountWithBalance = Account(Money(100.0), clock)
 
-
-    @BeforeEach
-    internal fun setUp() {
-
-    }
 
     @Test
     fun `deposit an amount to increase the balance`() {
@@ -88,34 +82,33 @@ class AccountTest {
 
     @Test
     internal fun `produce statement with account activities`() {
-
-        offset(clock, ofDays(1))
+        anAccountWithBalance.clock = offset(anAccountWithBalance.clock, ofDays(1))
         anAccountWithBalance.withdraw(Money(50.5))
-        offset(clock, ofDays(2))
+        anAccountWithBalance.clock = offset(anAccountWithBalance.clock, ofDays(2))
         anAccountWithBalance.deposit(Money(100.3))
-        offset(clock, ofHours(6))
+        anAccountWithBalance.clock = offset(anAccountWithBalance.clock, ofHours(1))
 
         val statement = anAccountWithBalance.statement()
 
         assertThat(statement).isEqualTo("""
-            Activity: Open; Balance: $100.00
+            Activity: OPEN $100.00
             Date: Feb 10, 2020 Time: 12:03:03 ET
             
-            Activity: Withdraw $50.50; 
+            Activity: WITHDRAW $50.50
             Date: Feb 11, 2020 Time: 12:03:03 ET
             
-            Activity: Deposit $100.00; 
+            Activity: DEPOSIT $100.30
             Date: Feb 13, 2020 Time: 12:03:03 ET
             
-            Balance: $149.50
-            Date: Feb 13, 2020 Time: 18:03:03 ET
+            Balance: $149.80
+            Date: Feb 13, 2020 Time: 13:03:03 ET
         """.trimIndent())
     }
 
     @Test
     internal fun `record account open transaction`() {
         assertThat(anAccountWithBalance.transactions()).containsExactly(
-                Transaction(ACCOUNT_OPEN, Money(100.0), ofInstant(accountOpenTimeInUtc, etZone)))
+                Transaction(OPEN, Money(100.0), ofInstant(accountOpenTimeInUtc, etZone)))
     }
 
     @Test
@@ -124,8 +117,8 @@ class AccountTest {
         anAccountWithBalance.deposit(Money(40.0))
 
         assertThat(anAccountWithBalance.transactions()).containsExactly(
-                Transaction(ACCOUNT_OPEN, Money(100.0), ofInstant(accountOpenTimeInUtc, etZone)),
-                Transaction(DEPOSIT, Money(140.0), ofInstant(parse("2020-02-10T23:03:03.00Z"), etZone))
+                Transaction(OPEN, Money(100.0), ofInstant(accountOpenTimeInUtc, etZone)),
+                Transaction(DEPOSIT, Money(40.0), ofInstant(parse("2020-02-10T23:03:03.00Z"), etZone))
         )
     }
 
@@ -135,9 +128,21 @@ class AccountTest {
         anAccountWithBalance.withdraw(Money(40.0))
 
         assertThat(anAccountWithBalance.transactions()).containsExactly(
-                Transaction(ACCOUNT_OPEN, Money(100.0), ofInstant(accountOpenTimeInUtc, etZone)),
-                Transaction(WITHDRAW, Money(60.0), ofInstant(parse("2020-02-10T23:03:03.00Z"), etZone))
+                Transaction(OPEN, Money(100.0), ofInstant(accountOpenTimeInUtc, etZone)),
+                Transaction(WITHDRAW, Money(40.0), ofInstant(parse("2020-02-10T23:03:03.00Z"), etZone))
         )
+    }
+
+    @Test
+    internal fun `print out transaction with balance and date`() {
+        val transaction = Transaction(WITHDRAW, Money(99.4), ofInstant(accountOpenTimeInUtc, etZone))
+
+        val output =
+                """
+                    Activity: WITHDRAW $99.40
+                    Date: Feb 10, 2020 Time: 12:03:03 ET
+                """.trimIndent()
+        assertThat(transaction.toString()).isEqualTo(output)
     }
 
     @ParameterizedTest
@@ -154,10 +159,10 @@ class AccountTest {
         fun testData(): Stream<Arguments> =
                 Stream.of(
                         Arguments.of(ofHours(6L), { acc: Account -> acc.withdraw(Money(39.0)) },
-                                Transaction(WITHDRAW, Money(61.0),
+                                Transaction(WITHDRAW, Money(39.0),
                                         ofInstant(parse("2020-02-10T23:03:03.00Z"), etZone))),
                         Arguments.of(ofHours(5L), { acc: Account -> acc.deposit(Money(39.0)) },
-                                Transaction(DEPOSIT, Money(139.0),
+                                Transaction(DEPOSIT, Money(39.0),
                                         ofInstant(parse("2020-02-10T22:03:03.00Z"), etZone)))
                 )
     }
